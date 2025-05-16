@@ -8,6 +8,13 @@ package-mode=false
 
 [tool.poetry.dependencies]
 python = "^3.12"
+fastapi = {extras = ["standard"], version = "^0.115.12"}
+sqlalchemy = "^2.0.40"
+alembic = "^1.15.2"
+pydantic-settings = "^2.9.1"
+asyncpg = "^0.30.0"
+pyjwt = "^2.10.1"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -16,21 +23,30 @@ pre-commit = "^4.0.1"
 black = "^24.10.0"
 ruff = "^0.8.3"
 mypy = "^1.13.0"
+isort = "^6.0.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.isort]
-profile = "black"
 
 [tool.black]
 line-length = 89
 include = '\.pyi?$'
 
 [tool.ruff]
-lint.select = ["F", "E", "W", "I", "N", "PL", "C", "B"]
+lint.select = ["F", "I", "E", "W", "N", "PL", "C", "B", "FAST"]
 line-length = 89
+src = ["app"]
+target-version = "py312"
+
+[tool.ruff.format]
+exclude = ["*.pyi"]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
 
 [tool.pytest.ini_options]
 pythonpath = [
