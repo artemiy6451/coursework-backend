@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from app.models import Base
-from app.user.schemas import UserShow
+from app.user.schemas import TimeData, UserShow
 from sqlalchemy import TEXT, VARCHAR, DateTime, ForeignKey, Integer, text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,10 +16,10 @@ class UserModel(Base):
         server_default=text("TIMEZONE('utc', now())"),
     )
 
-    def to_read_model(
-        self, time_data: list[tuple[datetime, datetime]] | None = None
-    ) -> UserShow:
-        return UserShow(username=self.username, time=self.time, time_data=time_data)
+    def to_read_model(self, time_data: list[TimeData] | None = None) -> UserShow:
+        return UserShow(
+            id=self.id, username=self.username, time=self.time, time_data=time_data
+        )
 
 
 class UserInfoModel(Base):
@@ -34,3 +34,9 @@ class UserInfoModel(Base):
         DateTime(timezone=True),
         server_default=text("TIMEZONE('utc', now())"),
     )
+
+    def to_read_model(self) -> TimeData:
+        delta = int((self.session_end - self.session_start).total_seconds() // 60)
+        return TimeData(
+            session_start=self.session_start, session_end=self.session_end, delta=delta
+        )

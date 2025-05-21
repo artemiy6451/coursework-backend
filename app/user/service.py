@@ -2,7 +2,22 @@ from app.database import async_session_maker
 from app.repository import AbstractRepository, SQLAlchemyRepository
 from app.user.model import UserInfoModel, UserModel
 from app.user.repository import UserInfoRepository
-from app.user.schemas import AllUsersShow, UserCreate, UserCreated, UserShow
+from app.user.schemas import (
+    AllUsersShow,
+    ParsedTimeData,
+    UserCreate,
+    UserCreated,
+    UserShow,
+)
+from app.user.timedata import (
+    get_average_time_per_day,
+    get_average_time_per_month,
+    get_average_time_per_week,
+    get_heatmap,
+    get_most_visited_day_of_month,
+    get_most_visited_time_of_month,
+    get_total_time,
+)
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
@@ -37,11 +52,14 @@ class UserService:
         user_info = await self.user_repository.find_one(user_id)
         if user_info is None:
             raise Exception("User not found")
-        print(user_id)
         filter = UserInfoModel.user_id == user_id
         time_data = await self.user_info_repository.find_all(filter)
+        time_data_formated = [data.to_read_model() for data in time_data]
         return UserShow(
-            username=user_info.username, time=user_info.time, time_data=time_data
+            id=user_info.id,
+            username=user_info.username,
+            time=user_info.time,
+            time_data=time_data_formated,
         )
 
     async def get_all_users(self) -> AllUsersShow:
@@ -71,7 +89,32 @@ class UserService:
                 detail="User not found",
             )
         return UserShow(
+            id=user_new.id,
             username=user_new.username,
             time=user_new.time,
             time_data=None,
+        )
+
+    async def get_parsed_time(self, username: str) -> ParsedTimeData:
+        user_info = await self.get_user_info(username=username)
+        if user_info.time_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="No user info."
+            )
+        return ParsedTimeData(
+            total_spent_time=get_total_time(time_data=user_info.time_data),
+            average_time_per_day=get_average_time_per_day(time_data=user_info.time_data),
+            average_time_per_week=get_average_time_per_week(
+                time_data=user_info.time_data
+            ),
+            average_time_per_month=get_average_time_per_month(
+                time_data=user_info.time_data
+            ),
+            most_visited_day_of_month=get_most_visited_day_of_month(
+                time_data=user_info.time_data
+            ),
+            most_visited_time_of_month=get_most_visited_time_of_month(
+                time_data=user_info.time_data
+            ),
+            heatmap=get_heatmap(time_data=user_info.time_data),
         )

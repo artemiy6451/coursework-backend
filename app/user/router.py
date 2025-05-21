@@ -1,7 +1,13 @@
 from typing import Annotated
 
 from app.user.dependincies import user_service
-from app.user.schemas import AllUsersShow, UserCreate, UserCreated, UserShow
+from app.user.schemas import (
+    AllUsersShow,
+    ParsedTimeData,
+    UserCreate,
+    UserCreated,
+    UserShow,
+)
 from app.user.service import UserService
 from fastapi import APIRouter, Depends, status
 
@@ -43,3 +49,11 @@ async def change_time(
 ) -> UserShow:
     user = await service.change_time(username=username, time=time)
     return user
+
+
+@user_router.get("/get_user_info/{username}")
+async def get_user_info(
+    username: str, service: Annotated[UserService, Depends(user_service)]
+) -> ParsedTimeData:
+    user_time_data = await service.get_parsed_time(username=username)
+    return user_time_data
